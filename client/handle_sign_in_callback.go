@@ -38,6 +38,7 @@ func (logtoClient *LogtoClient) HandleSignInCallback(request *http.Request) erro
 
 	log.Debug("logto", "call", "handle-sign-in-callback", "status", "fetching-token")
 
+	// this might be the problem
 	codeTokenResponse, fetchTokenErr := core.FetchTokenByAuthorizationCode(logtoClient.httpClient, &core.FetchTokenByAuthorizationCodeOptions{
 		TokenEndpoint: oidcConfig.TokenEndpoint,
 		Code:          code,
@@ -47,7 +48,7 @@ func (logtoClient *LogtoClient) HandleSignInCallback(request *http.Request) erro
 		RedirectUri:   signInSession.RedirectUri,
 	})
 
-	log.Debug("logto", "call", "handle-sign-in-callback", "status", "fetched-token", "error", fetchTokenErr)
+	log.Debug("logto", "call", "handle-sign-in-callback", "status", "fetched-token", "error", fetchTokenErr, "token_response", codeTokenResponse)
 	if fetchTokenErr != nil {
 		return fetchTokenErr
 	}
@@ -56,6 +57,10 @@ func (logtoClient *LogtoClient) HandleSignInCallback(request *http.Request) erro
 
 	logtoClient.storage.SetItem(StorageKeySignInSession, "")
 
+	log.Debug("logto", "call", "handle-sign-in-callback", "status", "cleared-sign-in-session")
+
+	// - Save tokens to storage
+	log.Debug("logto", "call", "handle-sign-in-callback", "status", "constructing-access-token")
 	accessToken := AccessToken{
 		Token:     codeTokenResponse.AccessToken,
 		Scope:     codeTokenResponse.Scope,
